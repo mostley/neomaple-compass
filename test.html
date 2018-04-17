@@ -5,34 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Test</title>
+
+    <style>
+        #info {
+            border: 1px solid #eee;
+            color: #333;
+            padding: 20px;
+            font-family: courier;
+        }
+    </style>
 </head>
 <body>
+    <label for="direction_x">Direction X</label>
+    <input id="direction_x" type="range" min="0" max="360" value="0" class="slider">
+    <label for="direction_y">Direction Y</label>
+    <input id="direction_y" type="range" min="0" max="360" value="0" class="slider">
+    <label for="direction_z">Direction Z</label>
+    <input id="direction_z" type="range" min="0" max="360" value="0" class="slider">
+
     <canvas id="output" width="800" height="600"></canvas>
 
-    <script>
-        var elem = document.getElementById('output');
-        var ctx = elem.getContext('2d');
-        var NUMPIXELS = 16;
-        var dir = 0;
-        var centerIndex = Math.floor((NUMPIXELS - 1) / 2);
-        var centerIndexOffset = dir - centerIndex;
+    <pre id="info"></pre>
 
-        function calculateDistance(i) {
+    <script>
+        var directionSliders = ['direction_x', 'direction_y', 'direction_z']
+            .map(id => document.getElementById(id));
+        var NUMPIXELS = 16;
+        var eulerAngles = [0, 0, 0];
+        var normal;
+        var visualizationScale = 200;
+        var visualizationOffset = 300;
+        var visualizationDotSize = 20;
+        var dots = [];
+
+        for (var i=0; i<NUMPIXELS; i++) {
+            dots.push([
+                Math.sin(i/NUMPIXELS * Math.PI * 2),
+                Math.cos(i/NUMPIXELS * Math.PI * 2),
+                0
+            ]);
+        }
+
+        function eulerToVector(euler) {
+            var yaw = euler[0] * Math.PI/180;
+            var pitch = euler[1] * Math.PI/180;
+            var roll = euler[2] * Math.PI/180;
+            return [
+                -Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
+                -Math.sin(yaw) * Math.sin(pitch) * Math.sin(roll) + Math.cos(yaw) * Math.cos(roll),
+                 Math.cos(pitch) * Math.sin(roll)
+            ];
+        }
+
+        function length(v) {
+            return Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
+        }
+
+        function divide(v, scalar) {
+            return [
+                v[0] / scalar,
+                v[1] / scalar,
+                v[2] / scalar
+            ];
+        }
+
+        const dotProduct = (v1, v2) =>
+            v1[0] * v2[0] +
+            v1[1] * v2[1] +
+            v1[2] * v2[2];
+
+        function normalize(v) {
+            return divide(v, length(v));
+        }
+
+        function calculateDistance(i, dot) {
+            var distance = dotProduct(normal, dot);
+            console.log(distance);
+            return distance;
+        }
+
+        function calculateDistance_from_center(i, dot) {
+            var centerIndex = Math.floor((NUMPIXELS - 1) / 2);
+            var centerIndexOffset = normal[0] - centerIndex;
             var index = Math.abs((i + centerIndexOffset) % NUMPIXELS);
             return Math.abs(centerIndex - index) * (255 / (NUMPIXELS - 1));
         }
 
-        function drawDot(i, x, y) {
-            var distance = calculateDistance(i);
-            ctx.fillStyle = "rgb(" + distance + "," + (255 - distance) + ", 0)";
+        function drawDot(ctx, i, dot, distance) {
+            var x = dot[0] * visualizationScale + visualizationOffset;
+            var y = dot[1] * visualizationScale + visualizationOffset;
+
+            var intensity = Math.floor(distance * 255);
+
+            ctx.fillStyle = `rgb(0, ${intensity}, 0)`;
             ctx.beginPath();
-            ctx.arc(x, y, 20, 0, 2 * Math.PI);
+            ctx.arc(x, y, visualizationDotSize, 0, 2 * Math.PI);
             ctx.fill();
         }
 
-        for (var i=0; i<NUMPIXELS; i++) {
-            drawDot(i, Math.sin(i/NUMPIXELS * Math.PI * 2)*200+300, Math.cos(i/NUMPIXELS * Math.PI * 2)*200+300);
+        function render() {
+            console.log('rendering ', eulerAngles, normal);
+
+            var elem = document.getElementById('output');
+            var ctx = elem.getContext('2d');
+
+            ctx.clearRect(0, 0, elem.width, elem.height);
+            dots.forEach((dot, i) => {
+                var distance = calculateDistance(i, dot);
+                drawDot(ctx, i, dot, distance);
+            });
         }
+
+        function updateDirection() {
+            eulerAngles = directionSliders.map(slider => parseInt(slider.value));
+            normal = eulerToVector(eulerAngles);
+            render();
+
+            document.getElementById('info').innerHTML =
+                    `X: ${eulerAngles[0].toFixed(2).padStart(6, ' ')} ` +
+                    `Y: ${eulerAngles[1].toFixed(2).padStart(6, ' ')} ` +
+                    `Z: ${eulerAngles[2].toFixed(2).padStart(6, ' ')}\n` +
+                `Normal: [ ` +
+                    `${normal[0].toFixed(2).padStart(5, ' ')}, ` +
+                    `${normal[1].toFixed(2).padStart(5, ' ')}, ` +
+                    `${normal[2].toFixed(2).padStart(5, ' ')} ` +
+                `]`;
+        }
+
+        directionSliders
+            .map(slider => slider.addEventListener('change', () => {
+                updateDirection();
+            }));
+
+        updateDirection();
     </script>
 </body>
 </html>
