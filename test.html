@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Test</title>
+</head>
+<body>
+    <canvas id="output" width="800" height="600"></canvas>
+
+    <script>
+        var elem = document.getElementById('output');
+        var ctx = elem.getContext('2d');
+        var NUMPIXELS = 16;
+        var dir = 0;
+        var centerIndex = Math.floor((NUMPIXELS - 1) / 2);
+        var centerIndexOffset = dir - centerIndex;
+
+        function calculateDistance(i) {
+            var index = Math.abs((i + centerIndexOffset) % NUMPIXELS);
+            return Math.abs(centerIndex - index) * (255 / (NUMPIXELS - 1));
+        }
+
+        function drawDot(i, x, y) {
+            var distance = calculateDistance(i);
+            ctx.fillStyle = "rgb(" + distance + "," + (255 - distance) + ", 0)";
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+
+        for (var i=0; i<NUMPIXELS; i++) {
+            drawDot(i, Math.sin(i/NUMPIXELS * Math.PI * 2)*200+300, Math.cos(i/NUMPIXELS * Math.PI * 2)*200+300);
+        }
+    </script>
+</body>
+</html>
