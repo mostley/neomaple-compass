@@ -88,6 +88,11 @@
             scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), origin, length, 0x0000ff ) );
             scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, length, 0x00ff00 ) );
 
+            var geometry = new THREE.TorusGeometry(0.5, 0.05, 3, 16);
+            var material = new THREE.MeshBasicMaterial( { color: 0xcccccc } );
+            var torus = new THREE.Mesh( geometry, material );
+            scene.add( torus );
+
             camera.position.z = 2;
             controls.update();
         }
@@ -102,9 +107,9 @@
         }
 
         function eulerToVector(euler) {
-            var roll = euler[0] * Math.PI/180;
+            var pitch = euler[0] * Math.PI/180;
             var yaw = euler[1] * Math.PI/180;
-            var pitch = euler[2] * Math.PI/180;
+            var roll = euler[2] * Math.PI/180;
             return [
                 /*-Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
                 -Math.sin(yaw) * Math.sin(pitch) * Math.sin(roll) + Math.cos(yaw) * Math.cos(roll),
@@ -182,7 +187,7 @@
         }
 
         function render() {
-            console.log('rendering ', eulerAngles, normal);
+            //console.log('rendering ', eulerAngles, normal);
 
             var elem = document.getElementById('output');
             var ctx = elem.getContext('2d');
