@@ -13,7 +13,15 @@
             padding: 20px;
             font-family: courier;
         }
+
+        #normal-visualization {
+            position: absolute;
+            top: 100px;
+        }
     </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/91/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <label for="direction_x">Direction X</label>
@@ -27,6 +35,8 @@
 
     <pre id="info"></pre>
 
+    <div id="normal-visualization"></div>
+
     <script>
         var directionSliders = ['direction_x', 'direction_y', 'direction_z']
             .map(id => document.getElementById(id));
@@ -36,6 +46,8 @@
         var visualizationScale = 200;
         var visualizationOffset = 300;
         var visualizationDotSize = 20;
+        var renderer, scene, camera;
+        var normalArrow;
         var dots = [];
 
         for (var i=0; i<NUMPIXELS; i++) {
@@ -44,6 +56,45 @@
                 Math.cos(i/NUMPIXELS * Math.PI * 2),
                 0
             ]);
+        }
+
+        function createNormalVisualizationSzene() {
+            var width = 300;
+            var height = 300;
+            var elem = document.getElementById('normal-visualization');
+            elem.style.width = width;
+            elem.style.height = height;
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );
+
+            var controls = new THREE.OrbitControls(camera, elem);
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize( width, height );
+            elem.innerHTML = '';
+            elem.appendChild( renderer.domElement );
+
+            var dir = new THREE.Vector3(normal[0], normal[1], normal[2]);
+
+            var origin = new THREE.Vector3( 0, 0, 0 );
+            var length = 1;
+
+            normalArrow = new THREE.ArrowHelper( dir, origin, length, 0xffff00 );
+            scene.add(normalArrow);
+
+            scene.add( new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), origin, length, 0xff0000 ) );
+            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), origin, length, 0x00ff00 ) );
+            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, length, 0x0000ff ) );
+
+            camera.position.z = 2;
+            controls.update();
+        }
+
+        function animate() {
+            normalArrow.setDirection(new THREE.Vector3(normal[0], normal[1], normal[2]));
+
+            requestAnimationFrame( animate );
+            renderer.render( scene, camera );
         }
 
         function eulerToVector(euler) {
@@ -80,7 +131,7 @@
 
         function calculateDistance(i, dot) {
             var distance = dotProduct(normal, dot);
-            console.log(distance);
+            //console.log(distance);
             return distance;
         }
 
@@ -138,6 +189,9 @@
             }));
 
         updateDirection();
+
+        createNormalVisualizationSzene();
+        animate();
     </script>
 </body>
 </html>
