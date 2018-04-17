@@ -107,16 +107,16 @@
         }
 
         function eulerToVector(euler) {
-            var pitch = euler[0] * Math.PI/180;
+            var roll = euler[0] * Math.PI/180;
             var yaw = euler[1] * Math.PI/180;
-            var roll = euler[2] * Math.PI/180;
+            var pitch = euler[2] * Math.PI/180;
             return [
-                /*-Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
+                -Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
                 -Math.sin(yaw) * Math.sin(pitch) * Math.sin(roll) + Math.cos(yaw) * Math.cos(roll),
-                 Math.cos(pitch) * Math.sin(roll)*/
-                Math.cos(yaw) * Math.cos(pitch),
+                 Math.cos(pitch) * Math.sin(roll)
+                /*Math.cos(yaw) * Math.cos(pitch),
                 Math.sin(yaw) * Math.cos(pitch),
-                Math.sin(pitch)
+                Math.sin(pitch)*/
             ];
         }
 
