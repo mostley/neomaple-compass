@@ -42,10 +42,12 @@
             .map(id => document.getElementById(id));
         var NUMPIXELS = 16;
         var eulerAngles = [0, 0, 0];
+        var targetEulerAngles = [...eulerAngles];
         var normal;
         var visualizationScale = 200;
         var visualizationOffset = 300;
         var visualizationDotSize = 20;
+        var animationSpeed = 0.1;
         var renderer, scene, camera;
         var normalArrow;
         var dots = [];
@@ -83,14 +85,16 @@
             scene.add(normalArrow);
 
             scene.add( new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), origin, length, 0xff0000 ) );
-            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), origin, length, 0x00ff00 ) );
-            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, length, 0x0000ff ) );
+            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), origin, length, 0x0000ff ) );
+            scene.add( new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), origin, length, 0x00ff00 ) );
 
             camera.position.z = 2;
             controls.update();
         }
 
         function animate() {
+            updateDirection();
+
             normalArrow.setDirection(new THREE.Vector3(normal[0], normal[1], normal[2]));
 
             requestAnimationFrame( animate );
@@ -98,13 +102,16 @@
         }
 
         function eulerToVector(euler) {
-            var yaw = euler[0] * Math.PI/180;
-            var pitch = euler[1] * Math.PI/180;
-            var roll = euler[2] * Math.PI/180;
+            var roll = euler[0] * Math.PI/180;
+            var yaw = euler[1] * Math.PI/180;
+            var pitch = euler[2] * Math.PI/180;
             return [
-                -Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
+                /*-Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
                 -Math.sin(yaw) * Math.sin(pitch) * Math.sin(roll) + Math.cos(yaw) * Math.cos(roll),
-                 Math.cos(pitch) * Math.sin(roll)
+                 Math.cos(pitch) * Math.sin(roll)*/
+                Math.cos(yaw) * Math.cos(pitch),
+                Math.sin(yaw) * Math.cos(pitch),
+                Math.sin(pitch)
             ];
         }
 
@@ -120,13 +127,33 @@
             ];
         }
 
+        function multiply(v, scalar) {
+            return [
+                v[0] * scalar,
+                v[1] * scalar,
+                v[2] * scalar
+            ];
+        }
+
         const dotProduct = (v1, v2) =>
             v1[0] * v2[0] +
             v1[1] * v2[1] +
             v1[2] * v2[2];
 
+        function add(v1, v2) {
+            return [
+                v1[0] + v2[0],
+                v1[1] + v2[1],
+                v1[2] + v2[2]
+            ];
+        }
+
         function normalize(v) {
             return divide(v, length(v));
+        }
+
+        function lerp(v0, v1, t) {
+            return add(multiply(v0, (1-t)), multiply(v1, t));
         }
 
         function calculateDistance(i, dot) {
@@ -168,7 +195,7 @@
         }
 
         function updateDirection() {
-            eulerAngles = directionSliders.map(slider => parseInt(slider.value));
+            eulerAngles = lerp(eulerAngles, targetEulerAngles, animationSpeed);
             normal = eulerToVector(eulerAngles);
             render();
 
@@ -183,10 +210,15 @@
                 `]`;
         }
 
+        function updateTargetDirection() {
+            targetEulerAngles = directionSliders.map(slider => parseInt(slider.value));
+        }
+
         directionSliders
             .map(slider => slider.addEventListener('change', () => {
-                updateDirection();
+                updateTargetDirection();
             }));
+
 
         updateDirection();
 
