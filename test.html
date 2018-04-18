@@ -50,6 +50,7 @@
         var animationSpeed = 0.1;
         var renderer, scene, camera;
         var normalArrow;
+        var plane;
         var dots = [];
 
         for (var i=0; i<NUMPIXELS; i++) {
@@ -93,6 +94,17 @@
             var torus = new THREE.Mesh( geometry, material );
             scene.add( torus );
 
+            var geometry = new THREE.PlaneGeometry(5, 20, 32);
+            var material = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                side: THREE.DoubleSide,
+                opacity: 0.5,
+                transparent: true
+            });
+
+            plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+
             camera.position.z = 2;
             controls.update();
         }
@@ -101,6 +113,10 @@
             updateDirection();
 
             normalArrow.setDirection(new THREE.Vector3(normal[0], normal[1], normal[2]));
+
+            plane.rotation.x = (eulerAngles[0] + 90) * Math.PI / 180;
+            plane.rotation.y =  eulerAngles[1] * Math.PI / 180;
+            plane.rotation.z =  eulerAngles[2] * Math.PI / 180;
 
             requestAnimationFrame( animate );
             renderer.render( scene, camera );
@@ -120,49 +136,39 @@
             ];
         }
 
-        function length(v) {
-            return Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
-        }
+        const length = (v) => Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2);
 
-        function divide(v, scalar) {
-            return [
-                v[0] / scalar,
-                v[1] / scalar,
-                v[2] / scalar
-            ];
-        }
+        const divide = (v, scalar) => [
+            v[0] / scalar,
+            v[1] / scalar,
+            v[2] / scalar
+        ];
 
-        function multiply(v, scalar) {
-            return [
-                v[0] * scalar,
-                v[1] * scalar,
-                v[2] * scalar
-            ];
-        }
+        const multiply = (v, scalar) => [
+            v[0] * scalar,
+            v[1] * scalar,
+            v[2] * scalar
+        ];
 
         const dotProduct = (v1, v2) =>
             v1[0] * v2[0] +
             v1[1] * v2[1] +
             v1[2] * v2[2];
 
-        function add(v1, v2) {
-            return [
-                v1[0] + v2[0],
-                v1[1] + v2[1],
-                v1[2] + v2[2]
-            ];
-        }
+        const add = (v1, v2) => [
+            v1[0] + v2[0],
+            v1[1] + v2[1],
+            v1[2] + v2[2]
+        ];
 
-        function normalize(v) {
-            return divide(v, length(v));
-        }
+        const normalize = (v) => divide(v, length(v));
 
-        function lerp(v0, v1, t) {
-            return add(multiply(v0, (1-t)), multiply(v1, t));
-        }
+        const lerp = (v0, v1, t) => add(multiply(v0, (1-t)), multiply(v1, t));
+
 
         function calculateDistance(i, dot) {
-            var distance = dotProduct(normal, dot);
+            const offset = [0, 0, 1];
+            var distance = dotProduct(normal, add(dot, offset));
             //console.log(distance);
             return distance;
         }
@@ -174,16 +180,20 @@
             return Math.abs(centerIndex - index) * (255 / (NUMPIXELS - 1));
         }
 
-        function drawDot(ctx, i, dot, distance) {
+        function drawDot(ctx, i, dot, intensity) {
             var x = dot[0] * visualizationScale + visualizationOffset;
             var y = dot[1] * visualizationScale + visualizationOffset;
-
-            var intensity = Math.floor((1-distance) * 255);
 
             ctx.fillStyle = `rgb(0, ${intensity}, 0)`;
             ctx.beginPath();
             ctx.arc(x, y, visualizationDotSize, 0, 2 * Math.PI);
             ctx.fill();
+        }
+
+        function calculateIntensity(distance, angleRatio) {
+            var intensity = (1 - distance);
+            intensity = Math.floor(intensity * 255);
+            return intensity;
         }
 
         function render() {
@@ -192,18 +202,27 @@
             var elem = document.getElementById('output');
             var ctx = elem.getContext('2d');
 
+            const axis1 = [0, 1, 0];
+            const axis2 = [1, 0, 0];
+            const angle1 = Math.acos(dotProduct(normal, axis1) / (length(normal) * length(axis1)));
+            const angle2 = Math.acos(dotProduct(normal, axis2) / (length(normal) * length(axis2)));
+            const angleRatio = Math.min(angle1, angle2) / 1.5;
+
             ctx.clearRect(0, 0, elem.width, elem.height);
             dots
                 .map((dot, i) =>
                     ({ i, dot, distance: calculateDistance(i, dot) }))
-                .forEach(({ i, dot, distance }) =>
-                    drawDot(ctx, i, dot, distance)
+                .map(({ i, dot, distance }) =>
+                    ({ i, dot, intensity: calculateIntensity(distance, angleRatio) }))
+                .forEach(({ i, dot, intensity }) =>
+                    drawDot(ctx, i, dot, intensity)
                 );
         }
 
         function updateDirection() {
             eulerAngles = lerp(eulerAngles, targetEulerAngles, animationSpeed);
             normal = eulerToVector(eulerAngles);
+
             render();
 
             document.getElementById('info').innerHTML =
@@ -218,6 +237,7 @@
         }
 
         function updateTargetDirection() {
+
             targetEulerAngles = directionSliders.map(slider => parseInt(slider.value));
         }
 
