@@ -114,9 +114,9 @@
 
             normalArrow.setDirection(new THREE.Vector3(normal[0], normal[1], normal[2]));
 
-            plane.rotation.x = eulerAngles[0] * Math.PI / 180;
-            plane.rotation.y = eulerAngles[1] * Math.PI / 180;
-            plane.rotation.z = eulerAngles[2] * Math.PI / 180;
+            plane.rotation.x = eulerAngles[2] * Math.PI / 180;
+            plane.rotation.y = -eulerAngles[0] * Math.PI / 180;
+            plane.rotation.z = -eulerAngles[1] * Math.PI / 180;
 
             requestAnimationFrame( animate );
             renderer.render( scene, camera );
