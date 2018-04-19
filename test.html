@@ -114,25 +114,22 @@
 
             normalArrow.setDirection(new THREE.Vector3(normal[0], normal[1], normal[2]));
 
-            plane.rotation.x = (eulerAngles[0] + 90) * Math.PI / 180;
-            plane.rotation.y =  eulerAngles[1] * Math.PI / 180;
-            plane.rotation.z =  eulerAngles[2] * Math.PI / 180;
+            plane.rotation.x = eulerAngles[0] * Math.PI / 180;
+            plane.rotation.y = eulerAngles[1] * Math.PI / 180;
+            plane.rotation.z = eulerAngles[2] * Math.PI / 180;
 
             requestAnimationFrame( animate );
             renderer.render( scene, camera );
         }
 
         function eulerToVector(euler) {
-            var roll = euler[0] * Math.PI/180;
-            var yaw = euler[1] * Math.PI/180;
-            var pitch = euler[2] * Math.PI/180;
+            var roll = euler[0] * Math.PI / 180;
+            var yaw = euler[1] * Math.PI / 180;
+            var pitch = euler[2] * Math.PI / 180;
             return [
-                -Math.cos(yaw) * Math.sin(pitch) * Math.sin(roll) * -Math.sin(yaw) * Math.cos(roll),
-                -Math.sin(yaw) * Math.sin(pitch) * Math.sin(roll) + Math.cos(yaw) * Math.cos(roll),
-                 Math.cos(pitch) * Math.sin(roll)
-                /*Math.cos(yaw) * Math.cos(pitch),
-                Math.sin(yaw) * Math.cos(pitch),
-                Math.sin(pitch)*/
+                -Math.sin(yaw) * Math.sin(pitch) * Math.cos(roll) - Math.cos(yaw) * Math.sin(roll),
+                -Math.cos(yaw) * Math.sin(pitch) * Math.cos(roll) + Math.sin(yaw) * Math.sin(roll),
+                Math.cos(pitch) * Math.cos(roll)
             ];
         }
 
@@ -167,7 +164,7 @@
 
 
         function calculateDistance(i, dot) {
-            const offset = [0, 0, 1];
+            const offset = [0, 0, .5];
             var distance = dotProduct(normal, add(dot, offset));
             //console.log(distance);
             return distance;
