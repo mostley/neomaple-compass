@@ -1,43 +1,85 @@
 #include <Arduino.h>
-// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
-// released under the GPLv3 license to match the rest of the AdaFruit NeoPixel library
+#include <Wire.h>
 
 #include <NeoMaple.h>
+#include "vmath.h"
 
-// How many NeoPixels are attached to the Arduino?
+int ESPI2CAddress = 0x53;
+
 #define NUMPIXELS 16
 
-// When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
-// Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
-// example for more information on possible values.
 NeoMaple pixels = NeoMaple(NUMPIXELS, NEO_GRB + NEO_KHZ800);
-
-int delayval = 100; // delay for half a second
-
-void setup()
-{
-    Serial.begin(9600);
-    pixels.begin(); // This initializes the NeoPixel library.
-}
 
 int dir = 0;
 int focus = 20;
 
-void loop()
+int delayval = 100;
+float dots[NUMPIXELS][3];
+float normal[3];
+
+void setup()
 {
-    int centerIndex = floor((NUMPIXELS - 1) / 2);
-    int centerIndexOffset = dir - centerIndex;
+    Serial.begin(9600);
+    pixels.begin();
+
+    delay(100);
+
     for (int i = 0; i < NUMPIXELS; i++)
     {
-        int index = abs((i + centerIndexOffset) % NUMPIXELS);
-        int distance = (abs(centerIndex - index) / (float)NUMPIXELS) * focus;
+        dots[i][0] = sin(i / NUMPIXELS * PI * 2);
+        dots[i][1] = cos(i / NUMPIXELS * PI * 2),
+        dots[i][2] = 0;
+    }
+}
 
-        pixels.setPixelColor(i, pixels.Color(0, distance, 0));
+float calculateDistance(float dot[3])
+{
+    float offset[3] = { 0, 0, .5F };
+    return dotProduct(normal, add(dot, offset));
+}
+
+float calculateIntensity(float distance)
+{
+    return floor((1 - distance) * 255);
+}
+
+void updateDot(int dotIndex, float intensity)
+{
+    pixels.setPixelColor(dotIndex, pixels.Color(0, intensity, 0));
+}
+
+void updateDots()
+{
+    for (int i = 0; i < NUMPIXELS; i++)
+    {
+        float distance = calculateDistance(dots[i]);
+        float intensity = calculateIntensity(distance);
+        updateDot(i, intensity);
+    }
+}
+
+void loop()
+{
+    Wire.requestFrom(ESPI2CAddress, 3);
+
+    int X, Y, Z;
+    if (Wire.available() <= 3)
+    {
+        X = Wire.read();
+        Y = Wire.read();
+        Z = Wire.read();
     }
 
-    pixels.show();
+    Serial.print("X= ");
+    Serial.print(X);
+    Serial.print(" Y= ");
+    Serial.print(Y);
+    Serial.print(" Z= ");
+    Serial.println(Z);
 
-    dir = (dir + 1) % NUMPIXELS;
+    updateDots();
+
+    pixels.show();
 
     delay(delayval);
 }

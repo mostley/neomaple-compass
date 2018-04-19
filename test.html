@@ -199,13 +199,13 @@
             var elem = document.getElementById('output');
             var ctx = elem.getContext('2d');
 
+            ctx.clearRect(0, 0, elem.width, elem.height);
+
             const axis1 = [0, 1, 0];
             const axis2 = [1, 0, 0];
             const angle1 = Math.acos(dotProduct(normal, axis1) / (length(normal) * length(axis1)));
             const angle2 = Math.acos(dotProduct(normal, axis2) / (length(normal) * length(axis2)));
             const angleRatio = Math.min(angle1, angle2) / 1.5;
-
-            ctx.clearRect(0, 0, elem.width, elem.height);
             dots
                 .map((dot, i) =>
                     ({ i, dot, distance: calculateDistance(i, dot) }))
